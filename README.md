@@ -200,15 +200,3 @@ This policy restricts bucket access to the Caddy IAM role and account administra
 ```
 
 Adjust the `Admin*` pattern to match your admin role naming convention (e.g., `AdministratorAccess`, `AdminRole`).
-
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## Security
-
-To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
-
-## License
-
-This project is licensed under the [Apache License 2.0](LICENSE).
