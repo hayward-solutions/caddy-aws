@@ -16,8 +16,10 @@ jobs:
         include:
           - platform: linux/amd64
             runner: ubuntu-latest
+            slug: amd64
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
+            slug: arm64
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -62,7 +64,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digest-${{ hashFiles('/tmp/digests/*') }}
+          name: digest-${{ matrix.slug }}
           path: /tmp/digests/*
           retention-days: 1
 
