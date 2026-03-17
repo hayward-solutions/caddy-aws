@@ -1,0 +1,23 @@
+{
+	email {$CADDY_EMAIL}
+
+	storage s3 {
+		host {$S3_HOST:s3.amazonaws.com}
+		bucket {$S3_BUCKET}
+		access_id {$AWS_ACCESS_KEY_ID:}
+		secret_key {$AWS_SECRET_ACCESS_KEY:}
+		prefix {$S3_PREFIX:caddy}
+		region {$AWS_REGION:us-east-1}
+		use_iam_provider {$S3_USE_IAM:true}
+	}
+
+	acme_dns route53 {
+		access_key_id {$AWS_ACCESS_KEY_ID:}
+		secret_access_key {$AWS_SECRET_ACCESS_KEY:}
+		region {$AWS_REGION:us-east-1}
+	}
+}
+
+{$CADDY_DOMAIN} {
+	reverse_proxy {$CADDY_UPSTREAM}
+}
