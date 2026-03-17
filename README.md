@@ -1,11 +1,29 @@
 # caddy-aws
 
+[![Build and Push](https://github.com/hayward-solutions/caddy-aws/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/hayward-solutions/caddy-aws/actions/workflows/build-and-push.yml)
+[![Test](https://github.com/hayward-solutions/caddy-aws/actions/workflows/test.yml/badge.svg)](https://github.com/hayward-solutions/caddy-aws/actions/workflows/test.yml)
+
 Custom [Caddy](https://caddyserver.com/) Docker image with AWS plugins for automatic TLS certificate management.
 
 - **DNS-01 challenge** via [Route53](https://github.com/caddy-dns/route53) — no need to expose port 80
 - **Certificate storage** in [S3](https://github.com/ss098/certmagic-s3) — persistent across container restarts and shared across instances
+- **Multi-platform** — supports `linux/amd64` and `linux/arm64`
 
-## Build
+## Quick Start
+
+```bash
+docker run -d \
+  -p 443:443 \
+  -e CADDY_DOMAIN=example.com \
+  -e CADDY_EMAIL=admin@example.com \
+  -e CADDY_UPSTREAM=app:8080 \
+  -e S3_BUCKET=my-caddy-certs \
+  ghcr.io/hayward-solutions/caddy-aws:latest
+```
+
+> When running on EC2/ECS with an IAM role attached, AWS credentials are picked up automatically. See [IAM Roles](#iam-roles) below.
+
+## Build from Source
 
 ```bash
 docker build -t caddy-aws .
@@ -49,7 +67,7 @@ docker run -d \
   -e AWS_SECRET_ACCESS_KEY=... \
   -e AWS_REGION=us-east-1 \
   -e S3_BUCKET=my-caddy-certs \
-  caddy-aws
+  ghcr.io/hayward-solutions/caddy-aws:latest
 ```
 
 ### Docker Compose
@@ -57,7 +75,7 @@ docker run -d \
 ```yaml
 services:
   caddy:
-    build: .
+    image: ghcr.io/hayward-solutions/caddy-aws:latest
     ports:
       - "443:443"
     environment:
@@ -80,7 +98,7 @@ services:
 The default Caddyfile provides a single reverse proxy site. For more complex configurations, mount your own:
 
 ```bash
-docker run -v ./Caddyfile:/etc/caddy/Caddyfile caddy-aws
+docker run -v ./Caddyfile:/etc/caddy/Caddyfile ghcr.io/hayward-solutions/caddy-aws:latest
 ```
 
 The `{$VAR}` and `{$VAR:default}` substitution syntax works in custom Caddyfiles too.
@@ -96,7 +114,7 @@ docker run -d \
   -e CADDY_EMAIL=admin@example.com \
   -e CADDY_UPSTREAM=app:8080 \
   -e S3_BUCKET=my-caddy-certs \
-  caddy-aws
+  ghcr.io/hayward-solutions/caddy-aws:latest
 ```
 
 The Route53 plugin uses the AWS SDK credential chain and picks up IAM role credentials automatically. The S3 storage plugin uses its IAM provider by default. To use explicit credentials instead, set `S3_USE_IAM=false` and provide `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
@@ -182,3 +200,15 @@ This policy restricts bucket access to the Caddy IAM role and account administra
 ```
 
 Adjust the `Admin*` pattern to match your admin role naming convention (e.g., `AdministratorAccess`, `AdminRole`).
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Security
+
+To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
