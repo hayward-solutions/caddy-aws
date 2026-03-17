@@ -100,3 +100,85 @@ docker run -d \
 ```
 
 The Route53 plugin uses the AWS SDK credential chain and picks up IAM role credentials automatically. The S3 storage plugin uses its IAM provider by default. To use explicit credentials instead, set `S3_USE_IAM=false` and provide `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+
+## AWS IAM Permissions
+
+### IAM Policy
+
+The following IAM policy provides the minimum permissions required for Caddy to manage DNS challenges and store certificates. Replace `HOSTED_ZONE_ID` with your Route53 hosted zone ID and `my-caddy-certs` with your S3 bucket name.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Route53GetChange",
+      "Effect": "Allow",
+      "Action": "route53:GetChange",
+      "Resource": "arn:aws:route53:::change/*"
+    },
+    {
+      "Sid": "Route53ManageTXTRecords",
+      "Effect": "Allow",
+      "Action": [
+        "route53:ListResourceRecordSets",
+        "route53:ChangeResourceRecordSets"
+      ],
+      "Resource": "arn:aws:route53:::hostedzone/HOSTED_ZONE_ID"
+    },
+    {
+      "Sid": "Route53ListZones",
+      "Effect": "Allow",
+      "Action": "route53:ListHostedZonesByName",
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3CertStorage",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-caddy-certs",
+        "arn:aws:s3:::my-caddy-certs/*"
+      ]
+    }
+  ]
+}
+```
+
+### S3 Bucket Policy
+
+This policy restricts bucket access to the Caddy IAM role and account administrators. Non-admin IAM users and other services cannot access the bucket. Replace `ACCOUNT_ID`, `CADDY_ROLE_NAME`, and `my-caddy-certs` with your values.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyNonCaddyNonAdmin",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::my-caddy-certs",
+        "arn:aws:s3:::my-caddy-certs/*"
+      ],
+      "Condition": {
+        "StringNotLike": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::ACCOUNT_ID:role/CADDY_ROLE_NAME",
+            "arn:aws:iam::ACCOUNT_ID:root",
+            "arn:aws:iam::ACCOUNT_ID:role/Admin*"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+Adjust the `Admin*` pattern to match your admin role naming convention (e.g., `AdministratorAccess`, `AdminRole`).
